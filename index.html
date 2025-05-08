@@ -86,8 +86,8 @@
     <h2>Upload Tiket NOC</h2>
     <input type="file" id="fileInput" accept=".txt" onchange="previewFile()" />
     <button onclick="uploadFile()">Upload Notepad</button>
-    <p class="note">Format nama file: <b>PIC-SHIFT.txt</b><br>Contoh isi: <br>RWEXL4 => untuk Non Merge<br>RWE9XD- => untuk Merge<br>240293853028 => untuk Grup</p>
-
+    <p class="note">Format nama file: <b>PIC-SHIFT.txt</b><br>Contoh isi: <br>RWEXL4 => untuk Non Merge<br>RWE9XD- => untuk Merge<br>240293853028 => untuk Grup<br>RWEXD8+ => untuk Akses Web</p>
+    <div id="previewArea"></div>
     <h3>Export Data by Month&Year</h3>
     <label for="year">Pilih Tahun:</label>
     <select id="year">
@@ -118,8 +118,7 @@
       <option value="11">November</option>
       <option value="12">Desember</option>
     </select>
-    <button onclick="handleExport()">Export Data</button>
-    <div id="previewArea"></div>
+    <button onclick="handleExport()">Export Data to CSV</button>
   </div>
 
   <script>
