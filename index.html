@@ -270,10 +270,10 @@
         const analisa = rawAnalisa.replace(/-$/, '');
         statusCount[status]++;
         return {
-          "NAMA LENGKAP": pic,  // Sesuaikan dengan nama kolom baru
+         pic,  // Sesuaikan dengan nama kolom baru
           "SHIFT": shift,
           "ANALISA": analisa,
-          "EVIDENCE (isi dengan No. Tiket / ID. Pel)": status,  // Sesuaikan dengan nama kolom baru
+         status,  // Sesuaikan dengan nama kolom baru
          timestamp
         };
       });
