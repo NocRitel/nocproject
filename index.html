@@ -134,6 +134,7 @@
     function getStatus(analisa) {
       if (/^\d+$/.test(analisa)) return "Grup";
       if (analisa.endsWith("-")) return "Tiket Merge";
+      if (analisa.endsWith("+")) return "Tiket Akses Web";
       return "Tiket";
     }
 
@@ -263,11 +264,16 @@
       if (lines.length === 0) return alert("⚠️ File kosong.");
 
       const timestamp = getWIBTimestamp();
-      const statusCount = { "Tiket": 0, "Tiket Merge": 0, "Grup": 0 };
+      const statusCount = { 
+          "Tiket": 0, 
+          "Tiket Merge": 0, 
+          "Grup": 0,
+          "Tiket Akses Web": 0  // Tambahan baru
+        };
 
       const data = lines.map(rawAnalisa => {
         const status = getStatus(rawAnalisa);
-        const analisa = rawAnalisa.replace(/-$/, '');
+        const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '');
         statusCount[status]++;
         return {
          pic,  // Sesuaikan dengan nama kolom baru
@@ -294,6 +300,7 @@
           if (statusCount["Tiket"]) summary += `- ${statusCount["Tiket"]} Tiket\n`;
           if (statusCount["Tiket Merge"]) summary += `- ${statusCount["Tiket Merge"]} Tiket Merge\n`;
           if (statusCount["Grup"]) summary += `- ${statusCount["Grup"]} Grup\n`;
+          if (statusCount["Tiket Akses Web"]) summary += `- ${statusCount["Tiket Akses Web"]} Tiket Akses Web\n`;
           alert(summary);
           fileInput.value = '';
           document.getElementById("previewArea").innerHTML = '';
