@@ -239,7 +239,7 @@
       'zikrul naufal aqil (l2)',
       'zulfadhil kusuma nugraha'
     ];
-      const fileInput = document.getElementById("fileInput");
+    const fileInput = document.getElementById("fileInput");
       const file = fileInput.files[0];
 
       if (!file) return alert("⚠️ Pilih file notepad terlebih dahulu.");
@@ -270,11 +270,11 @@
         const analisa = rawAnalisa.replace(/-$/, '');
         statusCount[status]++;
         return {
-          analisa,
-          status,
-          pic,
-          shift,
-          timestamp
+          "NAMA LENGKAP": pic,  // Sesuaikan dengan nama kolom baru
+          "SHIFT": shift,
+          "ANALISA": analisa,
+          "EVIDENCE (isi dengan No. Tiket / ID. Pel)": status,  // Sesuaikan dengan nama kolom baru
+         timestamp
         };
       });
 
