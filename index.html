@@ -239,6 +239,9 @@
       'zikrul naufal aqil (l2)',
       'zulfadhil kusuma nugraha'
     ];
+
+    const validShifts = ["pagi", "siang", "malam"];
+
     const fileInput = document.getElementById("fileInput");
       const file = fileInput.files[0];
 
@@ -256,6 +259,10 @@
 
       if (!validPICs.includes(pic)) {
         return alert(`❌ PIC "${rawPic}" tidak dikenali. Upload dibatalkan.`);
+      }
+
+      if (!validShifts.includes(shift)) {
+        return alert(`❌ Shift "${rawShift}" tidak valid. Hanya boleh: pagi, siang, atau malam.`);
       }
 
       const text = await file.text();
