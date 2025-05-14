@@ -139,6 +139,22 @@
       return "Tiket";
     }
 
+    function getGroup(rawAnalisa) {
+  // Pengecekan apakah rawAnalisa berisi kata "Grup"
+      if (rawAnalisa.includes("Grup")) {
+        return "Grup"; // Jika mengandung kata "Grup", statusnya adalah Grup
+      }
+      return ""; // Jika tidak ada kata "Grup", kembalikan kosong
+    }
+
+    function getTicketMerge(rawAnalisa) {
+      // Pengecekan apakah rawAnalisa berisi kata "Tiket Merge"
+      if (rawAnalisa.includes("Tiket Merge")) {
+        return "Tiket Merge"; // Jika mengandung kata "Tiket Merge", statusnya adalah Tiket Merge
+      }
+      return ""; // Jika tidak ada kata "Tiket Merge", kembalikan kosong
+    }
+
     function previewFile() {
       const fileInput = document.getElementById("fileInput");
       const previewArea = document.getElementById("previewArea");
@@ -168,158 +184,191 @@
     }
 
     async function uploadFile() {
-      const validPICs = [
-      'bagus isnu wardhana',
-      'muhammad rizki adi wibowo',
-      'imam arifin',
-      'abhie rafdi',
-      'ade maulana apriadi (l2)',
-      'afrizal salfarel',
-      'agil septia pamungkas',
-      'agus sapta permana',
-      'ahmad nur arifat',
-      'alifah nur hidayah',
-      'amin ariyanto (l2)',
-      'anang hidayat nur aziz',
-      'andhika meyrawan',
-      'annisa bunga salsabila',
-      'anton wahyu',
-      'auliya nisa nurfadzilla (l2)',
-      'azzam abdullah umar (l2)',
-      'banu putri pratiwi',
-      'bayu raihan sanjaya',
-      'bogi surya praja',
-      'budi sulistiyo (l2)',
-      'challesta prajna paramitha',
-      'damar pradifatama',
-      'desi dwi purwasih',
-      'edi gumtoro',
-      'edo yogapasha',
-      'faridah istiyorini',
-      'fortuna kahyangan',
-      'hafildarani herofianti (l2)',
-      'hendy septianto',
-      'idris sapta pamungkas',
-      'ikhsan maulana',
-      'ilham bhagas putra pratama',
-      'iqbal alya',
-      'jihan shafira adini',
-      'karunia larasati',
-      'kelvin prayogi',
-      'kinanti ninggar rahardani',
-      'lugina ashari',
-      'lutfi ahmad (l2)',
-      'm. abd. rosyid wibowo',
-      'malkan biyan aprialdi',
-      'muhammad bintang sandi jannata',
-      'muhammad chilmi irfanuddin (l2)',
-      'muhammad farid',
-      'muhammad hiksal daeng jb',
-      'muhammad thoriq',
-      'naila nazilatul fitri',
-      'nawasakti ayunus',
-      'nur rizki arifiansyah',
-      'pramudhito herlambang (l2)',
-      'rendiy compower jn hutapea',
-      'risal ramadhan',
-      'rizky wijaya (l2)',
-      'rizqi ramadhani ahmad',
-      'rizqi wahyu pratama (l2)',
-      'romy ade mulyana (l2)',
-      'roy mundo januardi (l2)',
-      'ryan arya maulana',
-      'satrio pratama rezky herdianata',
-      'sayyid tajuddin (l2)',
-      'shenya kameswari prima anydyaseta',
-      'sindhu nirmala',
-      'sultan yanuar',
-      'syahdilla sekar ramadhani',
-      'wisnu agung wicaksono',
-      'yarjuna rahmatalbar',
-      'yudo purnomo (l2)',
-      'zaki mubarok',
-      'zikrul naufal aqil (l2)',
-      'zulfadhil kusuma nugraha'
-    ];
+        const validPICs = [
+            'bagus isnu wardhana',
+            'muhammad rizki adi wibowo',
+            'imam arifin',
+            'abhie rafdi',
+            'ade maulana apriadi (l2)',
+            'afrizal salfarel',
+            'agil septia pamungkas',
+            'agus sapta permana',
+            'ahmad nur arifat',
+            'alifah nur hidayah',
+            'amin ariyanto (l2)',
+            'anang hidayat nur aziz',
+            'andhika meyrawan',
+            'annisa bunga salsabila',
+            'anton wahyu',
+            'auliya nisa nurfadzilla (l2)',
+            'azzam abdullah umar (l2)',
+            'banu putri pratiwi',
+            'bayu raihan sanjaya',
+            'bogi surya praja',
+            'budi sulistiyo (l2)',
+            'challesta prajna paramitha',
+            'damar pradifatama',
+            'desi dwi purwasih',
+            'edi gumtoro',
+            'edo yogapasha',
+            'faridah istiyorini',
+            'fortuna kahyangan',
+            'hafildarani herofianti (l2)',
+            'hendy septianto',
+            'idris sapta pamungkas',
+            'ikhsan maulana',
+            'ilham bhagas putra pratama',
+            'iqbal alya',
+            'jihan shafira adini',
+            'karunia larasati',
+            'kelvin prayogi',
+            'kinanti ninggar rahardani',
+            'lugina ashari',
+            'lutfi ahmad (l2)',
+            'm. abd. rosyid wibowo',
+            'malkan biyan aprialdi',
+            'muhammad bintang sandi jannata',
+            'muhammad chilmi irfanuddin (l2)',
+            'muhammad farid',
+            'muhammad hiksal daeng jb',
+            'muhammad thoriq',
+            'naila nazilatul fitri',
+            'nawasakti ayunus',
+            'nur rizki arifiansyah',
+            'pramudhito herlambang (l2)',
+            'rendiy compower jn hutapea',
+            'risal ramadhan',
+            'rizky wijaya (l2)',
+            'rizqi ramadhani ahmad',
+            'rizqi wahyu pratama (l2)',
+            'romy ade mulyana (l2)',
+            'roy mundo januardi (l2)',
+            'ryan arya maulana',
+            'satrio pratama rezky herdianata',
+            'sayyid tajuddin (l2)',
+            'shenya kameswari prima anydyaseta',
+            'sindhu nirmala',
+            'sultan yanuar',
+            'syahdilla sekar ramadhani',
+            'wisnu agung wicaksono',
+            'yarjuna rahmatalbar',
+            'yudo purnomo (l2)',
+            'zaki mubarok',
+            'zikrul naufal aqil (l2)',
+            'zulfadhil kusuma nugraha'
+        ];
 
-    const validShifts = ["pagi", "siang", "malam"];
+        const validShifts = ["pagi", "siang", "malam"];
+  
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
 
-    const fileInput = document.getElementById("fileInput");
-      const file = fileInput.files[0];
+        if (!file) return alert("⚠️ Pilih file notepad terlebih dahulu.");
 
-      if (!file) return alert("⚠️ Pilih file notepad terlebih dahulu.");
+        const fileName = file.name.replace(".txt", "");
+        const [rawPic, rawShift] = fileName.split("-");
 
-      const fileName = file.name.replace(".txt", "");
-      const [rawPic, rawShift] = fileName.split("-");
+        if (!rawPic || !rawShift) {
+          return alert("⚠️ Nama file harus format: PIC-SHIFT.txt");
+        }
 
-      if (!rawPic || !rawShift) {
-        return alert("⚠️ Nama file harus format: PIC-SHIFT.txt");
-      }
+        const pic = rawPic.trim().toLowerCase();
+        const shift = rawShift.trim().toLowerCase();
 
-      const pic = rawPic.trim().toLowerCase();
-      const shift = rawShift.trim().toLowerCase();
+        if (!validPICs.includes(pic)) {
+          return alert(`❌ PIC "${rawPic}" tidak dikenali. Upload dibatalkan.`);
+        }
 
-      if (!validPICs.includes(pic)) {
-        return alert(`❌ PIC "${rawPic}" tidak dikenali. Upload dibatalkan.`);
-      }
+        if (!validShifts.includes(shift)) {
+          return alert(`❌ Shift "${rawShift}" tidak valid. Hanya boleh: pagi, siang, atau malam.`);
+        }
 
-      if (!validShifts.includes(shift)) {
-        return alert(`❌ Shift "${rawShift}" tidak valid. Hanya boleh: pagi, siang, atau malam.`);
-      }
+        const text = await file.text();
+        const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+        if (lines.length === 0) return alert("⚠️ File kosong.");
 
-      const text = await file.text();
-      const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
-      if (lines.length === 0) return alert("⚠️ File kosong.");
-
-      const timestamp = getWIBTimestamp();
-      const statusCount = { 
+        const timestamp = getWIBTimestamp();
+        const statusCount = { 
           "Tiket": 0, 
           "Tiket Merge": 0, 
           "Grup": 0,
-          "Tiket Akses Web": 0  // Tambahan baru
+          "Tiket Akses Web": 0
         };
 
-      const data = lines.map(rawAnalisa => {
-        const status = getStatus(rawAnalisa);
-        const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '');
-        statusCount[status]++;
-        return {
-         pic,  // Sesuaikan dengan nama kolom baru
-          "SHIFT": shift,
-          "ANALISA": analisa,
-         status,  // Sesuaikan dengan nama kolom baru
-         timestamp
-        };
-      });
+        // Array untuk menyimpan data yang sudah terproses
+        const processedData = [];
 
-      try {
-        const response = await fetch('https://mjlgvgpsexudwfhjpacy.supabase.co/rest/v1/input_db', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0'
-          },
-          body: JSON.stringify(data)
-        });
+        const data = lines.map(rawAnalisa => {
+          const ticketMergeStatus = getTicketMerge(rawAnalisa);
+          const groupStatus = getGroup(rawAnalisa);
+          const status = ticketMergeStatus || groupStatus || getStatus(rawAnalisa);  // Prioritaskan status Tiket Merge atau Grup
+          
+          const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '');
+          
+          // Pengecekan duplikat untuk semua status
+          if (processedData.some(item => 
+              item["ANALISA"] === analisa && 
+              (item.status === "Tiket" || item.status === "Tiket Merge" || item.status === "Tiket Akses Web" || item.status === "Grup")
+          )) {
+            alert(`⚠️ Duplikat ditemukan: "${analisa}" sudah ada di status "${status}". Data ini tidak akan diproses.`);
+            return null; // Kalau sudah ada, jangan diproses lagi
+          }
 
-        if (response.ok) {
-          let summary = `✅ Berhasil kirim ${data.length} data:\n`;
+          statusCount[status]++;
+          const entry = {
+            pic,
+            "SHIFT": shift,
+            "ANALISA": analisa,
+            status,
+            timestamp
+          };
+          
+          processedData.push(entry); // Tambahkan ke array yang sudah diproses
+          return entry;
+        }).filter(item => item !== null); // Filter untuk menghapus data yang duplikat
+
+        try {
+            const response = await fetch('https://mjlgvgpsexudwfhjpacy.supabase.co/rest/v1/input_db', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0', // Ganti dengan API key yang valid
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0' // Ganti dengan token yang valid
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+              let summary = `✅ Berhasil kirim ${data.length} data:\n`;
               if (statusCount["Tiket"]) summary += `- ${statusCount["Tiket"]} Tiket\n`;
               if (statusCount["Tiket Merge"]) summary += `- ${statusCount["Tiket Merge"]} Tiket Merge\n`;
               if (statusCount["Grup"]) summary += `- ${statusCount["Grup"]} Grup\n`;
               if (statusCount["Tiket Akses Web"]) summary += `- ${statusCount["Tiket Akses Web"]} Tiket Akses Web\n`;
-          alert(summary);
-          fileInput.value = '';
-          document.getElementById("previewArea").innerHTML = '';
-        } else {
-          const err = await response.text();
-          alert("❌ Gagal kirim data: " + err);
+              alert(summary);
+              fileInput.value = '';
+              document.getElementById("previewArea").innerHTML = '';
+            } else {
+              const err = await response.text();
+              alert("❌ Gagal kirim data: " + err);
+            }
+          } catch (err) {
+            alert("❌ Error saat kirim: " + err.message);
+          }
         }
-      } catch (err) {
-        alert("❌ Error saat kirim: " + err.message);
-      }
-    }
+
+function getGroup(rawAnalisa) {
+  if (rawAnalisa.includes("Grup")) {
+    return "Grup";
+  }
+  return ""; // Return kosong jika tidak mengandung "Grup"
+}
+
+function getTicketMerge(rawAnalisa) {
+  if (rawAnalisa.includes("Tiket Merge")) {
+    return "Tiket Merge";
+  }
+  return ""; // Return kosong jika tidak mengandung "Tiket Merge"
+}
 
     async function fetchData(year, month) {
       const startDate = `${year}-${month}-01`;
