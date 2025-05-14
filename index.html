@@ -139,22 +139,6 @@
       return "Tiket";
     }
 
-    function getGroup(rawAnalisa) {
-  // Pengecekan apakah rawAnalisa berisi kata "Grup"
-      if (rawAnalisa.includes("Grup")) {
-        return "Grup"; // Jika mengandung kata "Grup", statusnya adalah Grup
-      }
-      return ""; // Jika tidak ada kata "Grup", kembalikan kosong
-    }
-
-    function getTicketMerge(rawAnalisa) {
-      // Pengecekan apakah rawAnalisa berisi kata "Tiket Merge"
-      if (rawAnalisa.includes("Tiket Merge")) {
-        return "Tiket Merge"; // Jika mengandung kata "Tiket Merge", statusnya adalah Tiket Merge
-      }
-      return ""; // Jika tidak ada kata "Tiket Merge", kembalikan kosong
-    }
-
     function previewFile() {
       const fileInput = document.getElementById("fileInput");
       const previewArea = document.getElementById("previewArea");
@@ -436,7 +420,6 @@ function getTicketMerge(rawAnalisa) {
       );
       return [headers.join(','), ...rows].join('\n');
     }
-
 
     function downloadCSV(csv, filename) {
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
