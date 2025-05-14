@@ -92,7 +92,8 @@
     <label for="year">Pilih Tahun:</label>
     <select id="year">
       <script>
-        const yearSelect = document.currentScript.parentElement;
+        window.onload = function() {
+        const yearSelect = document.getElementById("year");
         const currentYear = new Date().getFullYear();
         for (let y = currentYear; y >= 2020; y--) {
           const option = document.createElement("option");
@@ -100,6 +101,7 @@
           option.textContent = y;
           yearSelect.appendChild(option);
         }
+      };
       </script>
     </select>
 
@@ -303,10 +305,10 @@
 
         if (response.ok) {
           let summary = `✅ Berhasil kirim ${data.length} data:\n`;
-          if (statusCount["Tiket"]) summary += `- ${statusCount["Tiket"]} Tiket\n`;
-          if (statusCount["Tiket Merge"]) summary += `- ${statusCount["Tiket Merge"]} Tiket Merge\n`;
-          if (statusCount["Grup"]) summary += `- ${statusCount["Grup"]} Grup\n`;
-          if (statusCount["Tiket Akses Web"]) summary += `- ${statusCount["Tiket Akses Web"]} Tiket Akses Web\n`;
+              if (statusCount["Tiket"]) summary += `- ${statusCount["Tiket"]} Tiket\n`;
+              if (statusCount["Tiket Merge"]) summary += `- ${statusCount["Tiket Merge"]} Tiket Merge\n`;
+              if (statusCount["Grup"]) summary += `- ${statusCount["Grup"]} Grup\n`;
+              if (statusCount["Tiket Akses Web"]) summary += `- ${statusCount["Tiket Akses Web"]} Tiket Akses Web\n`;
           alert(summary);
           fileInput.value = '';
           document.getElementById("previewArea").innerHTML = '';
@@ -321,56 +323,80 @@
 
     async function fetchData(year, month) {
       const startDate = `${year}-${month}-01`;
-      const nextMonth = parseInt(month) + 1;
-      const endDate = nextMonth <= 12
-        ? `${year}-${nextMonth.toString().padStart(2, '0')}-01`
-        : `${parseInt(year) + 1}-01-01`;
+      const endDate = new Date(year, parseInt(month), 1).toISOString().split('T')[0]; // Bulan berikutnya
 
-      const url = `https://mjlgvgpsexudwfhjpacy.supabase.co/rest/v1/input_db?timestamp=gte.${startDate}&timestamp=lt.${endDate}&select=*`;
+      const allData = [];
+      let offset = 0;
+      const limit = 1000;
 
-      console.log(`Fetching data for: ${startDate} to ${endDate}`);
+      while (true) {
+        const rangeStart = offset;
+        const rangeEnd = offset + limit - 1;
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0'
+        const url = `https://mjlgvgpsexudwfhjpacy.supabase.co/rest/v1/input_db?timestamp=gte.${startDate}&timestamp=lt.${endDate}&select=*`;
+
+        const response = await fetch(url, {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0',
+            'Range': `${rangeStart}-${rangeEnd}`,
+            'Range-Unit': 'items'
+          }
+        });
+
+        if (!response.ok) {
+          console.error("Gagal fetch:", await response.text());
+          return [];
         }
-      });
 
-      const data = await response.json();
-      console.log(data);
-      if (response.ok) {
-        // Lanjutkan proses sesuai kebutuhan, misalnya konversi ke CSV
-        if (data.length > 0) {
-          const csv = convertToCSV(data); // Misalnya konversi data ke CSV
-          downloadCSV(csv, `data_${month}.csv`); // Simpan sebagai file CSV
-        } else {
-          alert('Data tidak ditemukan untuk bulan & tahun ini.');
-        }
+        const data = await response.json();
+        allData.push(...data);
+
+        if (data.length < limit) break; // Tidak ada data tambahan, berhenti
+        offset += limit;
+      }
+
+      console.log(`Total data diambil: ${allData.length}`);
+      return allData;
+    }
+
+    async function handleExport() {
+      const month = document.getElementById("month").value;
+      const year = document.getElementById("year").value;
+
+      const data = await fetchData(year, month);
+
+      if (data.length > 0) {
+        const csv = convertToCSV(data);
+        downloadCSV(csv, `data_${month}.csv`);
       } else {
-        console.error('Error fetching data:', data);
-        alert('Terjadi kesalahan saat mengambil data.');
+        alert('Data tidak ditemukan untuk bulan & tahun ini.');
       }
     }
 
     function convertToCSV(objArray) {
-      const array = [Object.keys(objArray[0])].concat(objArray);
-      return array.map(it => Object.values(it).toString()).join('\n');
+      const headers = Object.keys(objArray[0]);
+      const rows = objArray.map(obj =>
+        headers.map(header => {
+          const value = obj[header];
+          if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value;
+        }).join(',')
+      );
+      return [headers.join(','), ...rows].join('\n');
     }
+
 
     function downloadCSV(csv, filename) {
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
       const hiddenElement = document.createElement('a');
-      hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
-      hiddenElement.target = '_blank';
+      hiddenElement.href = url;
       hiddenElement.download = filename;
       hiddenElement.click();
-    }
-
-    function handleExport() {
-      const month = document.getElementById("month").value;
-      const year = document.getElementById("year").value;
-      fetchData(year, month);
+      URL.revokeObjectURL(url);
     }
   </script>
 </body>
