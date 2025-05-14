@@ -368,7 +368,7 @@
 
       if (data.length > 0) {
         const csv = convertToCSV(data);
-        downloadCSV(csv, `data_${month}.csv`);
+        downloadCSV(csv, `data_${month}_${year}.csv`);
       } else {
         alert('Data tidak ditemukan untuk bulan & tahun ini.');
       }
