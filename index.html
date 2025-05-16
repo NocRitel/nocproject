@@ -85,7 +85,10 @@
   <div class="container">
     <h2>Upload Tiket NOC</h2>
     <input type="file" id="fileInput" accept=".txt" onchange="previewFile()" />
-    <button onclick="uploadFile()">Upload Notepad</button>
+
+    <button id="uploadBtn" onclick="uploadFile()">Upload Notepad</button>
+    <p id="uploadStatus" style="margin-top: 10px; color: #333;"></p>
+
     <p class="note">Format nama file: <b>PIC-SHIFT.txt</b><br>Contoh isi: <br>RWEXL4 => untuk Non Merge<br>RWE9XD- => untuk Merge<br>240293853028 => untuk Grup<br>RWEXD8+ => untuk Akses Web</p>
     <div id="previewArea"></div>
     <h3>Export Data by Month&Year</h3>
@@ -253,6 +256,11 @@
     }
 
     async function uploadFile() {
+        
+        const uploadBtn = document.getElementById("uploadBtn");
+          uploadBtn.disabled = true;
+          uploadBtn.textContent = "⏳ Mengunggah File...";
+
         const validPICs = [
             'bagus isnu wardhana',
             'muhammad rizki adi wibowo',
@@ -328,15 +336,14 @@
         ];
 
         const validShifts = ["pagi", "siang", "malam"];
-  
         const fileInput = document.getElementById("fileInput");
-        const file = fileInput.files[0];
 
+        const file = fileInput.files[0];
         if (!file) return alert("⚠️ Pilih file notepad terlebih dahulu.");
 
         const fileName = file.name.replace(".txt", "");
-        const [rawPic, rawShift] = fileName.split("-");
 
+        const [rawPic, rawShift] = fileName.split("-");
         if (!rawPic || !rawShift) {
           return alert("⚠️ Nama file harus format: PIC-SHIFT.txt");
         }
@@ -353,41 +360,43 @@
         }
 
         const text = await file.text();
-  const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
-  if (lines.length === 0) return alert("⚠️ File kosong.");
+        const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+        if (lines.length === 0) return alert("⚠️ File kosong.");
 
-  const timestamp = getWIBTimestamp();
-  const statusCount = { "Tiket": 0, "Tiket Merge": 0, "Grup": 0, "Tiket Akses Web": 0 };
-  const processedData = [];
+        const timestamp = getWIBTimestamp();
+        const statusCount = { "Tiket": 0, "Tiket Merge": 0, "Grup": 0, "Tiket Akses Web": 0 };
+        const processedData = [];
 
-  // Ganti map dengan for..of agar bisa pakai await di dalam loop
-  for (const rawAnalisa of lines) {
-    const ticketMergeStatus = getTicketMerge(rawAnalisa);
-    const groupStatus = getGroup(rawAnalisa);
-    const status = ticketMergeStatus || groupStatus || getStatus(rawAnalisa);
+        // Ganti map dengan for..of agar bisa pakai await di dalam loop
+        for (const rawAnalisa of lines) {
+        const ticketMergeStatus = getTicketMerge(rawAnalisa);
+        const groupStatus = getGroup(rawAnalisa);
+        const status = ticketMergeStatus || groupStatus || getStatus(rawAnalisa);
 
-    const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '');
+        const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '');
 
-    // Cek duplikat di local file dulu
-    if (processedData.some(item => item["ANALISA"] === analisa && (item.status === "Tiket" || item.status === "Tiket Merge" || item.status === "Tiket Akses Web" || item.status === "Grup"))) {
-      alert(`⚠️ Duplikat ditemukan di file: "${analisa}". Data ini tidak akan diproses.`);
-      continue; // skip data duplikat lokal
-    }
+        // Cek duplikat di local file dulu
+        if (processedData.some(item => item["ANALISA"] === analisa && (item.status === "Tiket" || item.status === "Tiket Merge" || item.status === "Tiket Akses Web" || item.status === "Grup"))) {
+          alert(`⚠️ Duplikat ditemukan di file: "${analisa}". Data ini tidak akan diproses.`);
+          continue; // skip data duplikat lokal
+        }
 
-    // Cek duplikat di Supabase berdasarkan pic, analisa, timestamp
-    const exists = await checkIfExists(pic, analisa, timestamp);
-    if (exists) {
-      console.log(`⛔ Duplikat di database: PIC="${pic}", ANALISA="${analisa}", TIMESTAMP="${timestamp}". Lewati.`);
-      continue; // skip data duplikat di DB
-    }
+        // Cek duplikat di Supabase berdasarkan pic, analisa, timestamp
+        const exists = await checkIfExists(pic, analisa, timestamp);
+        if (exists) {
+          console.log(`⛔ Duplikat di database: PIC="${pic}", ANALISA="${analisa}", TIMESTAMP="${timestamp}". Lewati.`);
+          continue; // skip data duplikat di DB
+        }
 
-    statusCount[status]++;
-    processedData.push({ pic, SHIFT: shift, ANALISA: analisa, status, timestamp });
-  }
+          statusCount[status]++;
+          processedData.push({ pic, SHIFT: shift, ANALISA: analisa, status, timestamp });
+        }
 
-  if (processedData.length === 0) {
-    return alert("⚠️ Tidak ada data baru yang akan dikirim (semua duplikat).");
-  }
+        if (processedData.length === 0) {
+          alert("⚠️ Semua tiket tersebut sudah ada di database!");
+          location.reload(); // ⬅️ refresh halaman
+          return;
+        }
 
   // Kirim data ke Supabase
   try {
@@ -416,8 +425,13 @@
     }
   } catch (err) {
     alert("❌ Error saat kirim: " + err.message);
+  }  finally {
+    // Kode ini dijalankan baik berhasil maupun error
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = "Upload Notepad";
+    fileInput.value = "";
+    }
   }
-}
 
 function getGroup(rawAnalisa) {
   if (rawAnalisa.includes("Grup")) {
