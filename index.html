@@ -4,47 +4,67 @@
   <meta charset="UTF-8">
   <title>Upload Tiket - NOC Tool</title>
   <style>
-    body {
-      background-color: #f4f6f8;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    * {
+      box-sizing: border-box;
+    }
+
+    #vanta-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
       height: 100vh;
+      z-index: -1;
+    }
+
+    body {
       margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e9eff5, #fdfdfd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
 
     .container {
-      background-color: #fff;
-      padding: 2rem 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-      width: 500px;
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 1.2rem;
-      color: #333;
-    }
-
-    input[type="file"] {
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      background-color: rgba(201, 201, 201, 0.9); /* 0.7 = 70% opacity */
+      padding: 2rem;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      max-width: 540px;
       width: 100%;
     }
 
+    h2 {
+      margin-top: 0;
+      color: #007bff;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
     button {
-      background-color: #007BFF;
+      display: block;
+      width: 100%;
+      background-color: #38382e;
       color: white;
-      padding: 0.7rem 1.5rem;
       border: none;
+      padding: 0.75rem;
+      font-size: 1rem;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.2s;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      transition: background-color 0.2s ease;
     }
 
     button:hover {
@@ -52,50 +72,96 @@
     }
 
     .note {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      color: #666;
+      background-color: #f8f9fa;
+      border-left: 4px solid #007bff;
+      padding: 10px 15px;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: #444;
+      border-radius: 6px;
     }
 
     #previewArea {
-      margin-top: 1.5rem;
-      text-align: left;
+      margin-top: 1rem;
+      background-color: #f0f2f5;
+      padding: 10px;
+      border-radius: 8px;
       max-height: 300px;
       overflow-y: auto;
-      font-size: 0.9rem;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    th, td {
+      font-family: monospace;
+      white-space: pre-wrap;
       border: 1px solid #ccc;
-      padding: 6px 10px;
-      text-align: left;
     }
 
-    th {
-      background-color: #f0f0f0;
+    select {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    hr {
+      margin: 2rem 0 1.5rem;
+    }
+
+    #historyArea {
+      margin-top: 1rem;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
+  <div id="vanta-bg"></div>
   <div class="container">
     <h2>Upload Tiket NOC</h2>
+    <button onclick="toggleNote()" style="
+      margin-top: 1rem;
+      background-color: #e0e0e0;
+      color: #333;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    ">Lihat Format File</button>
+
+    <div id="noteSection" style="display: none; margin-top: 0.8rem; font-size: 0.85rem; color: #444; background: #f9f9f9; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+      <b>Format nama file:</b> <code>PIC-SHIFT.txt</code><br>
+      <b>Contoh isi:</b><br>
+      Non Merge = RWEXL4<br>
+      Merge = RWE9XD-<br>
+      Akses Web = RWEXD8+<br>
+      Grup = 240293853028
+    </div>
+
+    <script>
+      function toggleNote() {
+        const note = document.getElementById("noteSection");
+        note.style.display = note.style.display === "none" ? "block" : "none";
+      }
+    </script>
+
     <input type="file" id="fileInput" accept=".txt" onchange="previewFile()" />
+    <button id="uploadBtn" onclick="uploadFile()">Let’s Upload This! 🚀</button>
+    <p id="uploadStatus" style="text-align:center; color:#333;"></p>
 
-    <button id="uploadBtn" onclick="uploadFile()">Upload Notepad</button>
-    <p id="uploadStatus" style="margin-top: 10px; color: #333;"></p>
 
-    <p class="note">Format nama file: <b>PIC-SHIFT.txt</b><br>Contoh isi: <br>RWEXL4 => untuk Non Merge<br>RWE9XD- => untuk Merge<br>240293853028 => untuk Grup<br>RWEXD8+ => untuk Akses Web</p>
     <div id="previewArea"></div>
-    <h3>Export Data by Month&Year</h3>
-    <label for="year">Pilih Tahun:</label>
-    <select id="year">
-      <script>
-        window.onload = function() {
+
+    <h2>Export Data by Month & Year</h2>
+    <label for="year">Gimme the Year:</label>
+    <select id="year"></select>
+    <script>
+      window.onload = function() {
         const yearSelect = document.getElementById("year");
         const currentYear = new Date().getFullYear();
         for (let y = currentYear; y >= 2020; y--) {
@@ -105,26 +171,43 @@
           yearSelect.appendChild(option);
         }
       };
-      </script>
+    </script>
+    <label for="month">Gimme the Month:</label>
+    <select id="month">
+      <option value="01">January</option>
+      <option value="02">February</option>
+      <option value="03">March</option>
+      <option value="04">April</option>
+      <option value="05">May</option>
+      <option value="06">June</option>
+      <option value="07">July</option>
+      <option value="08">August</option>
+      <option value="09">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
     </select>
 
-    <label for="month">Pilih Bulan:</label>
-    <select id="month">
-      <option value="01">Januari</option>
-      <option value="02">Februari</option>
-      <option value="03">Maret</option>
-      <option value="04">April</option>
-      <option value="05">Mei</option>
-      <option value="06">Juni</option>
-      <option value="07">Juli</option>
-      <option value="08">Agustus</option>
-      <option value="09">September</option>
-      <option value="10">Oktober</option>
-      <option value="11">November</option>
-      <option value="12">Desember</option>
-    </select>
-    <button onclick="handleExport()">Export Data to CSV</button>
+    <button onclick="handleExport()">Grab My Data 📁</button>
+
+    <hr>
+    <button onclick="showTodayHistory()">Wanna See Today’s Upload? 👀</button>
+    <div id="historyArea"></div>
   </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+
+  <script>
+    VANTA.WAVES({
+      el: "#vanta-bg",
+      color: 0x0077ff,
+      shininess: 50,
+      waveHeight: 20,
+      waveSpeed: 1,
+      zoom: 1
+    })
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -191,6 +274,45 @@
         end: end.toISOString(),
       };
     }
+
+    async function showTodayHistory() {
+  const picInput = prompt("Masukkan nama PIC (harus sama dengan saat upload):");
+  if (!picInput) return;
+
+  const { start, end } = getDateRange(new Date());
+
+  const { data, error } = await supabaseClient
+    .from('input_db')
+    .select('ANALISA, SHIFT, timestamp')
+    .eq('pic', picInput.toLowerCase().trim())
+    .gte('timestamp', start)
+    .lte('timestamp', end);
+
+  const historyArea = document.getElementById("historyArea");
+
+  if (error) {
+    console.error("Gagal mengambil data:", error);
+    historyArea.innerHTML = `<p style="color: red;">Gagal mengambil data history</p>`;
+    return;
+  }
+
+  if (data.length === 0) {
+    historyArea.innerHTML = `<p><i>Belum ada data yang di-upload hari ini oleh ${picInput}</i></p>`;
+    return;
+  }
+
+  let html = `<table><thead><tr><th>No</th><th>Analisa</th><th>Shift</th><th>Timestamp</th></tr></thead><tbody>`;
+  data.forEach((item, index) => {
+    html += `<tr>
+      <td>${index + 1}</td>
+      <td>${item.ANALISA}</td>
+      <td>${item.SHIFT}</td>
+      <td>${new Date(item.timestamp).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  historyArea.innerHTML = html;
+}
 
     async function checkIfExists(pic, analisa, timestamp) {
       const { start, end } = getDateRange(timestamp);
@@ -259,7 +381,7 @@
         
         const uploadBtn = document.getElementById("uploadBtn");
           uploadBtn.disabled = true;
-          uploadBtn.textContent = "⏳ Mengunggah File...";
+          uploadBtn.textContent = "⏳ Uploading...";
 
         const validPICs = [
             'bagus isnu wardhana',
@@ -377,7 +499,8 @@
 
         // Cek duplikat di local file dulu
         if (processedData.some(item => item["ANALISA"] === analisa && (item.status === "Tiket" || item.status === "Tiket Merge" || item.status === "Tiket Akses Web" || item.status === "Grup"))) {
-          alert(`⚠️ Duplikat ditemukan di notepadmu: "${analisa}". Data tersebut akan di SKIP salah 1, silahkan klik "Oke" saja.`);
+          alert(`⚠️ Duplikat ditemukan di notepad: "${analisa}". Data tersebut akan di SKIP salah 1.`);
+          console.log(`⛔ Duplikat ditemukan di notepad: "${analisa}". Data tersebut akan di SKIP salah 1.`);
           continue; // skip data duplikat lokal
         }
 
