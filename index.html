@@ -461,13 +461,17 @@
         const fileInput = document.getElementById("fileInput");
 
         const file = fileInput.files[0];
-        if (!file) return alert("⚠️ Pilih file notepad terlebih dahulu.");
+        if (!file) {
+          alert("⚠️ Pilih file notepad terlebih dahulu.");
+          location.reload();  // reload halaman setelah klik OK
+          return;
+        }
 
         const fileName = file.name.replace(".txt", "");
 
         const [rawPic, rawShift] = fileName.split("-");
-        if (!file) {
-          alert("⚠️ Pilih file notepad terlebih dahulu.");
+        if (!rawPic || !rawShift) {
+          alert("⚠️ Nama file harus format: PIC-SHIFT.txt");
           location.reload();  // reload halaman setelah klik OK
           return;
         }
@@ -476,11 +480,15 @@
         const shift = rawShift.trim().toLowerCase();
 
         if (!validPICs.includes(pic)) {
-          return alert(`❌ PIC "${rawPic}" tidak dikenali. Upload dibatalkan.`);
+          alert(`❌ PIC "${rawPic}" tidak dikenali. Upload dibatalkan.`);
+          location.reload();  // reload halaman setelah klik OK
+          return;
         }
 
         if (!validShifts.includes(shift)) {
-          return alert(`❌ Shift "${rawShift}" tidak valid. Hanya boleh: pagi, siang, atau malam.`);
+          alert(`❌ Shift "${rawShift}" tidak valid. Hanya boleh: pagi, siang, atau malam.`);
+          location.reload();  // reload halaman setelah klik OK
+          return;
         }
 
         const text = await file.text();
