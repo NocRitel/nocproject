@@ -377,7 +377,7 @@
 
         // Cek duplikat di local file dulu
         if (processedData.some(item => item["ANALISA"] === analisa && (item.status === "Tiket" || item.status === "Tiket Merge" || item.status === "Tiket Akses Web" || item.status === "Grup"))) {
-          alert(`⚠️ Duplikat ditemukan di file: "${analisa}". Data ini tidak akan diproses.`);
+          alert(`⚠️ Duplikat ditemukan di notepadmu: "${analisa}". Data tersebut akan di SKIP salah 1, silahkan klik "Oke" saja.`);
           continue; // skip data duplikat lokal
         }
 
