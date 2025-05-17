@@ -466,8 +466,10 @@
         const fileName = file.name.replace(".txt", "");
 
         const [rawPic, rawShift] = fileName.split("-");
-        if (!rawPic || !rawShift) {
-          return alert("⚠️ Nama file harus format: PIC-SHIFT.txt");
+        if (!file) {
+          alert("⚠️ Pilih file notepad terlebih dahulu.");
+          location.reload();  // reload halaman setelah klik OK
+          return;
         }
 
         const pic = rawPic.trim().toLowerCase();
