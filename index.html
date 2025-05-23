@@ -230,6 +230,8 @@
       if (/^\d+$/.test(analisa)) return "Grup";
       if (analisa.endsWith("-")) return "Tiket Merge";
       if (analisa.endsWith("+")) return "Tiket Akses Web";
+      if (analisa.endsWith(".")) return "Grup Reconfig"
+      if (analisa.endsWith(",")) return "Grup Handling"
       return "Tiket";
     }
 
@@ -496,7 +498,7 @@
         if (lines.length === 0) return alert("⚠️ File kosong.");
 
         const timestamp = getWIBTimestamp();
-        const statusCount = { "Tiket": 0, "Tiket Merge": 0, "Grup": 0, "Tiket Akses Web": 0 };
+        const statusCount = { "Tiket": 0, "Tiket Merge": 0, "Grup": 0, "Tiket Akses Web": 0, "Grup Reconfig": 0, "Grup Handling": 0, };
         const processedData = [];
 
         // Ganti map dengan for..of agar bisa pakai await di dalam loop
@@ -505,10 +507,20 @@
         const groupStatus = getGroup(rawAnalisa);
         const status = ticketMergeStatus || groupStatus || getStatus(rawAnalisa);
 
-        const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '');
+        const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '').replace(/\.$/, '').replace(/,$/, '');
 
         // Cek duplikat di local file dulu
-        if (processedData.some(item => item["ANALISA"] === analisa && (item.status === "Tiket" || item.status === "Tiket Merge" || item.status === "Tiket Akses Web" || item.status === "Grup"))) {
+        if (processedData.some(item => 
+            item["ANALISA"] === analisa && 
+            (
+                item.status === "Tiket" || 
+                item.status === "Tiket Merge" || 
+                item.status === "Tiket Akses Web" || 
+                item.status === "Grup" || 
+                item.status === "Grup Reconfig" || 
+                item.status === "Grup Handling"
+            )
+        )) {
           alert(`⚠️ Duplikat ditemukan di notepad: "${analisa}". Data tersebut akan di SKIP salah 1.`);
           console.log(`⛔ Duplikat ditemukan di notepad: "${analisa}". Data tersebut akan di SKIP salah 1.`);
           continue; // skip data duplikat lokal
@@ -549,6 +561,8 @@
       if (statusCount["Tiket Merge"]) summary += `- ${statusCount["Tiket Merge"]} Tiket Merge\n`;
       if (statusCount["Grup"]) summary += `- ${statusCount["Grup"]} Grup\n`;
       if (statusCount["Tiket Akses Web"]) summary += `- ${statusCount["Tiket Akses Web"]} Tiket Akses Web\n`;
+      if (statusCount["Grup Reconfig"]) summary += `- ${statusCount["Grup Reconfig"]} Grup Reconfig\n`;
+      if (statusCount["Grup Handling"]) summary += `- ${statusCount["Grup Handling"]} Grup Handling\n`;
       alert(summary);
       fileInput.value = '';
       document.getElementById("previewArea").innerHTML = '';
