@@ -117,9 +117,79 @@
       font-size: 13px;
       line-height: 1.5;
     }
+
+        #warningButton {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      background-color: #2eb6f5;
+      color: rgb(255, 255, 255);
+      border: none;
+      border-radius: 50px;
+      padding: 5px 10px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      z-index: 999;
+        width: auto; /* tambahkan ini */
+      display: inline-flex; /* tambahkan ini */
+      align-items: center;  /* untuk vertical centering icon & text */
+      justify-content: center;
+      white-space: nowrap; /* agar tidak kepotong jika teks panjang */
+    }
+
+    #warningModal {
+      display: none;
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      background-color: white;
+      color: #333;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      max-width: 300px;
+      z-index: 1000;
+    }
+
+    #closeModal {
+      float: right;
+      font-size: 16px;
+      font-weight: bold;
+      color: #888;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <button id="warningButton">TERMS VIOLATION WARNING</button>
+  <div id="warningModal">
+  <span id="closeModal">&times;</span>
+  <strong>⚠️ API Key Usage Warning</strong>
+  <p style="font-size: 14px;">
+    Unauthorized use of the API key found on this website is strictly prohibited.<br>
+    <br>
+    This key is intended solely for official use within this platform. Any attempt to extract, reuse, or share the key for external applications or personal gain will be considered a violation of our terms of service and may result in legal action or access termination.<br>
+    <br>
+    Please respect the integrity and security of our services.
+  </p>
+</div>
+
+<script>
+  const button = document.getElementById('warningButton');
+  const modal = document.getElementById('warningModal');
+  const close = document.getElementById('closeModal');
+
+  button.addEventListener('click', () => {
+    modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+  });
+
+  close.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+  </script>
+
   <div id="vanta-bg"></div>
   <div class="container">
     <h2>Upload Tiket NOC</h2>
@@ -132,15 +202,27 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 0.85rem;
-    ">Lihat Format File</button>
+    ">Format Data</button>
 
     <div id="noteSection" style="display: none; margin-top: 0.8rem; font-size: 0.85rem; color: #444; background: #f9f9f9; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
       <b>Format nama file:</b> <code>PIC-SHIFT.txt</code><br>
       <b>Contoh isi:</b><br>
-      Non Merge = RWEXL4<br>
-      Merge = RWE9XD-<br>
-      Akses Web = RWEXD8+<br>
-      Grup = 240293853028
+      <b>L1</b><br>
+      - Tiket : ""<br>
+      - Tiket Merge : "-"<br>
+      - Grup : angka<br>
+      <br>
+      <b>L2</b><br>
+      - Tiket : ""<br>
+      - Tiket Akses Web : "+"<br>
+      - Grup Reconfig : "."<br>
+      - Grup Handling : ","<br>
+      <br>
+      <b>NOC Contact Center</b><br>
+      - Tiket : ""<br>
+      - Tiket Reconfig : "*"<br>
+      <br>
+      <b>NOTE : Tambahkan Symbol diakhir, contoh : RENQZ2E+</b><br>
     </div>
 
     <script>
@@ -230,8 +312,9 @@
       if (/^\d+$/.test(analisa)) return "Grup";
       if (analisa.endsWith("-")) return "Tiket Merge";
       if (analisa.endsWith("+")) return "Tiket Akses Web";
-      if (analisa.endsWith(".")) return "Grup Reconfig"
-      if (analisa.endsWith(",")) return "Grup Handling"
+      if (analisa.endsWith(".")) return "Grup Reconfig";
+      if (analisa.endsWith(",")) return "Grup Handling";
+      if (analisa.endsWith("*")) return "Tiket Reconfig";
       return "Tiket";
     }
 
@@ -502,7 +585,7 @@
         if (lines.length === 0) return alert("⚠️ File kosong.");
 
         const timestamp = getWIBTimestamp();
-        const statusCount = { "Tiket": 0, "Tiket Merge": 0, "Grup": 0, "Tiket Akses Web": 0, "Grup Reconfig": 0, "Grup Handling": 0, };
+        const statusCount = { "Tiket": 0, "Tiket Merge": 0, "Grup": 0, "Tiket Akses Web": 0, "Grup Reconfig": 0, "Grup Handling": 0, "Tiket Reconfig": 0, };
         const processedData = [];
 
         // Ganti map dengan for..of agar bisa pakai await di dalam loop
@@ -511,7 +594,7 @@
         const groupStatus = getGroup(rawAnalisa);
         const status = ticketMergeStatus || groupStatus || getStatus(rawAnalisa);
 
-        const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '').replace(/\.$/, '').replace(/,$/, '');
+        const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '').replace(/\.$/, '').replace(/,$/, '').replace(/\*$/, '');
 
         // Cek duplikat di local file dulu
         if (processedData.some(item => 
@@ -522,6 +605,7 @@
                 item.status === "Tiket Akses Web" || 
                 item.status === "Grup" || 
                 item.status === "Grup Reconfig" || 
+                item.status === "Tiket Reconfig" ||
                 item.status === "Grup Handling"
             )
         )) {
@@ -567,6 +651,7 @@
       if (statusCount["Tiket Akses Web"]) summary += `- ${statusCount["Tiket Akses Web"]} Tiket Akses Web\n`;
       if (statusCount["Grup Reconfig"]) summary += `- ${statusCount["Grup Reconfig"]} Grup Reconfig\n`;
       if (statusCount["Grup Handling"]) summary += `- ${statusCount["Grup Handling"]} Grup Handling\n`;
+      if (statusCount["Tiket Reconfig"]) summary += `- ${statusCount["Tiket Reconfig"]} Tiket Reconfig\n`;
       alert(summary);
       fileInput.value = '';
       document.getElementById("previewArea").innerHTML = '';
