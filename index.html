@@ -683,8 +683,19 @@ function getTicketMerge(rawAnalisa) {
 }
 
     async function fetchData(year, month) {
-      const startDate = `${year}-${month}-01`;
-      const endDate = new Date(year, parseInt(month), 1).toISOString().split('T')[0]; // Bulan berikutnya
+        const paddedMonth = String(month).padStart(2, '0');
+        const startDate = `${year}-${paddedMonth}-01`;
+
+        let nextMonth = parseInt(month) + 1;
+        let nextYear = parseInt(year);
+
+        if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear += 1;
+        }
+
+        const paddedNextMonth = String(nextMonth).padStart(2, '0');
+        const endDate = `${nextYear}-${paddedNextMonth}-01`;
 
       const allData = [];
       let offset = 0;
@@ -701,7 +712,8 @@ function getTicketMerge(rawAnalisa) {
             'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0',
             'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0',
             'Range': `${rangeStart}-${rangeEnd}`,
-            'Range-Unit': 'items'
+            'Range-Unit': 'items',
+            'Prefer': 'count=exact,return=representation'
           }
         });
 
@@ -734,6 +746,8 @@ function getTicketMerge(rawAnalisa) {
         alert('Data tidak ditemukan untuk bulan & tahun ini.');
       }
     }
+    
+    window.handleExport = handleExport;
 
     function convertToCSV(objArray) {
       const headers = Object.keys(objArray[0]);
