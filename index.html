@@ -43,7 +43,7 @@
       margin-top: 2rem;
     }
 
-    input[type="file"] {
+    input[type="file"], input[type="date"] {
       display: block;
       width: 100%;
       padding: 0.6rem;
@@ -160,6 +160,16 @@
       color: #888;
       cursor: pointer;
     }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -232,6 +242,9 @@
       }
     </script>
 
+    <label for="tanggalkerja"><b>Pilih Tanggal Kerja:</b></label>
+    <input type="date" id="tanggalkerja">
+
     <input type="file" id="fileInput" accept=".txt" onchange="previewFile()" />
     <button id="uploadBtn" onclick="uploadFile()">Let’s Upload This! 🚀</button>
     <p id="uploadStatus" style="text-align:center; color:#333;"></p>
@@ -244,6 +257,9 @@
     <select id="year"></select>
     <script>
       window.onload = function() {
+        // Set default tanggal kerja ke hari ini
+        document.getElementById('tanggalkerja').valueAsDate = new Date();
+
         const yearSelect = document.getElementById("year");
         const currentYear = new Date().getFullYear();
         for (let y = currentYear; y >= 2020; y--) {
@@ -336,7 +352,7 @@
 
         let table = "<table><thead><tr><th>No</th><th>Analisa</th><th>Status</th></tr></thead><tbody>";
         lines.forEach((line, index) => {
-          const analisa = line.replace(/-$/, '');
+          const analisa = line.replace(/[\+\-\.\,\*]$/, '');
           const status = getStatus(line);
           table += `<tr><td>${index + 1}</td><td>${analisa}</td><td>${status}</td></tr>`;
         });
@@ -346,12 +362,9 @@
       reader.readAsText(file);
     }
 
-    function getDateRange(date = new Date()) {
-  // Konversi ke objek Date jika bukan instance dari Date
-      if (!(date instanceof Date)) {
-        date = new Date(date);
-      }
-
+    // Fungsi untuk history dan cek duplikat tetap memakai range tanggal
+    function getDateRange(dateStr) {
+      const date = new Date(dateStr);
       const start = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0));
       const end = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59));
       return {
@@ -361,190 +374,96 @@
     }
 
     async function showTodayHistory() {
-  const picInput = prompt("Masukkan nama PIC (harus sama dengan saat upload):");
-  if (!picInput) return;
+      const picInput = prompt("Masukkan nama PIC (harus sama dengan saat upload):");
+      if (!picInput) return;
 
-  const { start, end } = getDateRange(new Date());
+      // Gunakan tanggal kerja yang terpilih di kalender untuk cek history
+      const tglKerja = document.getElementById("tanggalkerja").value;
+      const { start, end } = getDateRange(tglKerja);
 
-  const { data, error } = await supabaseClient
-    .from('input_db')
-    .select('ANALISA, SHIFT, timestamp')
-    .eq('pic', picInput.toLowerCase().trim())
-    .gte('timestamp', start)
-    .lte('timestamp', end);
+      const { data, error } = await supabaseClient
+        .from('input_db')
+        .select('ANALISA, SHIFT, timestamp, tanggalkerja')
+        .eq('pic', picInput.toLowerCase().trim())
+        .eq('tanggalkerja', tglKerja); // Filter berdasarkan kolom baru
 
-  const historyArea = document.getElementById("historyArea");
+      const historyArea = document.getElementById("historyArea");
 
-  if (error) {
-    console.error("Gagal mengambil data:", error);
-    historyArea.innerHTML = `<p style="color: red;">Gagal mengambil data history</p>`;
-    return;
-  }
+      if (error) {
+        console.error("Gagal mengambil data:", error);
+        historyArea.innerHTML = `<p style="color: red;">Gagal mengambil data history</p>`;
+        return;
+      }
 
-  if (data.length === 0) {
-    historyArea.innerHTML = `<p><i>Belum ada data yang di-upload hari ini oleh ${picInput}</i></p>`;
-    return;
-  }
+      if (data.length === 0) {
+        historyArea.innerHTML = `<p><i>Belum ada data yang di-upload untuk tanggal kerja ${tglKerja} oleh ${picInput}</i></p>`;
+        return;
+      }
 
-  let html = `<table><thead><tr><th>No</th><th>Analisa</th><th>Shift</th><th>Timestamp</th></tr></thead><tbody>`;
-  data.forEach((item, index) => {
-    html += `<tr>
-      <td>${index + 1}</td>
-      <td>${item.ANALISA}</td>
-      <td>${item.SHIFT}</td>
-      <td>${new Date(item.timestamp).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}</td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-  historyArea.innerHTML = html;
-}
+      let html = `<table><thead><tr><th>No</th><th>Analisa</th><th>Shift</th><th>Tanggal Kerja</th></tr></thead><tbody>`;
+      data.forEach((item, index) => {
+        html += `<tr>
+          <td>${index + 1}</td>
+          <td>${item.ANALISA}</td>
+          <td>${item.SHIFT}</td>
+          <td>${item.tanggalkerja}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      historyArea.innerHTML = html;
+    }
 
-    async function checkIfExists(pic, analisa, timestamp) {
-      const { start, end } = getDateRange(timestamp);
+    
 
+    // UPDATE: Cek duplikat sekarang berdasarkan PIC, Analisa, dan Tanggal Kerja
+    async function checkIfExists(pic, analisa, tanggalkerja) {
       const { data, error } = await supabaseClient
         .from('input_db')
         .select('*')
         .eq('pic', pic.toLowerCase().trim())
         .eq('ANALISA', analisa.trim())
-        .gte('timestamp', start)
-        .lte('timestamp', end);
+        .eq('tanggalkerja', tanggalkerja); // Cek kolom baru
 
       if (error) {
         console.error('Error checkIfExists:', error);
-        return false; // Kalau error, anggap belum ada supaya tidak block insert
+        return false; 
       }
-
       return data.length > 0;
     }
 
-    async function insertData(analisaInput, picInput, shiftInput, timestampInput) {
-      // Buat range tanggal dari timestampInput (ambil tanggalnya saja)
-      const dateOnly = timestampInput.split('T')[0]; // '2025-05-16'
-      const dateStart = new Date(dateOnly + 'T00:00:00Z').toISOString();
-      const dateEnd = new Date(dateOnly + 'T23:59:59Z').toISOString();
-
-      // Cek data duplikat berdasarkan ANALISA, pic, dan tanggal saja
-      const { data: existingData, error: fetchError } = await supabaseClient
-        .from('your_table')
-        .select('*')
-        .eq('ANALISA', analisaInput)
-        .eq('pic', picInput)
-        .gte('timestamp', dateStart)
-        .lte('timestamp', dateEnd);
-
-      if (fetchError) {
-        console.error('Error cek data duplikat:', fetchError);
-        return;
-      }
-
-      if (existingData.length > 0) {
-        console.log('Data sudah ada di tanggal tersebut, tidak perlu insert.');
-        return; // atau kasih notifikasi ke user
-      }
-
-      // Kalau belum ada data duplikat, baru insert
-      const { data, error } = await supabaseClient
-        .from('your_table')
-        .insert([
-          {
-            ANALISA: analisaInput,
-            pic: picInput,
-            SHIFT: shiftInput,
-            timestamp: timestampInput,
-          }
-        ]);
-
-      if (error) {
-        console.error('Gagal insert data:', error);
-      } else {
-        console.log('Data berhasil disimpan:', data);
-      }
-    }
-
     async function uploadFile() {
-        
         const uploadBtn = document.getElementById("uploadBtn");
-          uploadBtn.disabled = true;
-          uploadBtn.textContent = "⏳ Uploading...";
+        
+        // Ambil nilai tanggal kerja
+        const tglKerja = document.getElementById("tanggalkerja").value;
+        if (!tglKerja) {
+            alert("⚠️ Mohon pilih Tanggal Kerja terlebih dahulu!");
+            return;
+        }
+
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = "⏳ Memeriksa & Uploading...";
 
         const validPICs = [
-            'bagus isnu wardhana',
-            'zikrul naufal aqil (l2)',
-            'adinda syifa',
-            'alfito sri pangestu',
-            'fariz widi ferdiansyah',
-            'muhammad rizki adi wibowo',
-            'imam arifin',
-            'abhie rafdi',
-            'ade maulana apriadi (l2)',
-            'afrizal salfarel',
-            'agil septia pamungkas',
-            'agus sapta permana',
-            'ahmad nur arifat',
-            'alifah nur hidayah',
-            'amin ariyanto (l2)',
-            'anang hidayat nur aziz',
-            'andhika meyrawan',
-            'annisa bunga salsabila',
-            'anton wahyu',
-            'azzam abdullah umar (l2)',
-            'banu putri pratiwi',
-            'bayu raihan sanjaya',
-            'bogi surya praja',
-            'budi sulistiyo (l2)',
-            'challesta prajna paramitha',
-            'damar pradifatama',
-            'desi dwi purwasih',
-            'edi gumtoro',
-            'edo yogapasha',
-            'faridah istiyorini',
-            'fortuna kahyangan',
-            'hafildarani herofianti (l2)',
-            'hendy septianto',
-            'idris sapta pamungkas',
-            'ikhsan maulana',
-            'ilham bhagas putra pratama',
-            'iqbal alya',
-            'jihan shafira adini',
-            'karunia larasati',
-            'kelvin prayogi',
-            'kinanti ninggar rahardani',
-            'lugina ashari',
-            'lutfi ahmad (l2)',
-            'm. abd. rosyid wibowo',
-            'malkan biyan aprialdi',
-            'muhammad bintang sandi jannata',
-            'muhammad chilmi irfanuddin (l2)',
-            'muhammad farid',
-            'muhammad hiksal daeng jb',
-            'muhammad thoriq',
-            'naila nazilatul fitri',
-            'nawasakti ayunus',
-            'nur rizki arifiansyah',
-            'pramudhito herlambang (l2)',
-            'rendiy compower jn hutapea (l2)',
-            'risal ramadhan',
-            'rizky wijaya (l2)',
-            'rizqi ramadhani ahmad',
-            'rizqi wahyu pratama (l2)',
-            'romy ade mulyana (l2)',
-            'roy mundo januardi (l2)',
-            'ryan arya maulana',
-            'satrio pratama rezky herdianata',
-            'sayyid tajuddin (l2)',
-            'shenya kameswari prima anydyaseta',
-            'sindhu nirmala',
-            'sultan yanuar',
-            'syahdilla sekar ramadhani',
-            'wisnu agung wicaksono',
-            'yarjuna rahmatalbar',
-            'yudo purnomo (l2)',
-            'zaki mubarok',
-            'zulfadhil kusuma nugraha',
-            'asrina nur anbiya',
-            'ade prasetyo'
-            
+            'bagus isnu wardhana', 'zikrul naufal aqil (l2)', 'adinda syifa', 'alfito sri pangestu', 
+            'fariz widi ferdiansyah', 'muhammad rizki adi wibowo', 'imam arifin', 'abhie rafdi', 
+            'ade maulana apriadi (l2)', 'afrizal salfarel', 'agil septia pamungkas', 'agus sapta permana', 
+            'ahmad nur arifat', 'alifah nur hidayah', 'amin ariyanto (l2)', 'anang hidayat nur aziz', 
+            'andhika meyrawan', 'annisa bunga salsabila', 'anton wahyu', 'azzam abdullah umar (l2)', 
+            'banu putri pratiwi', 'bayu raihan sanjaya', 'bogi surya praja', 'budi sulistiyo (l2)', 
+            'challesta prajna paramitha', 'damar pradifatama', 'desi dwi purwasih', 'edi gumtoro', 
+            'edo yogapasha', 'faridah istiyorini', 'fortuna kahyangan', 'hafildarani herofianti (l2)', 
+            'hendy septianto', 'idris sapta pamungkas', 'ikhsan maulana', 'ilham bhagas putra pratama', 
+            'iqbal alya', 'jihan shafira adini', 'karunia larasati', 'kelvin prayogi', 'kinanti ninggar rahardani', 
+            'lugina ashari', 'lutfi ahmad (l2)', 'm. abd. rosyid wibowo', 'malkan biyan aprialdi', 
+            'muhammad bintang sandi jannata', 'muhammad chilmi irfanuddin (l2)', 'muhammad farid', 
+            'muhammad hiksal daeng jb', 'muhammad thoriq', 'naila nazilatul fitri', 'nawasakti ayunus', 
+            'nur rizki arifiansyah', 'pramudhito herlambang (l2)', 'rendiy compower jn hutapea (l2)', 
+            'risal ramadhan', 'rizky wijaya (l2)', 'rizqi ramadhani ahmad', 'rizqi wahyu pratama (l2)', 
+            'romy ade mulyana (l2)', 'roy mundo januardi (l2)', 'ryan arya maulana', 'satrio pratama rezky herdianata', 
+            'sayyid tajuddin (l2)', 'shenya kameswari prima anydyaseta', 'sindhu nirmala', 'sultan yanuar', 
+            'syahdilla sekar ramadhani', 'wisnu agung wicaksono', 'yarjuna rahmatalbar', 'yudo purnomo (l2)', 
+            'zaki mubarok', 'zulfadhil kusuma nugraha', 'asrina nur anbiya', 'ade prasetyo'
         ];
 
         const validShifts = ["pagi", "siang", "malam"];
@@ -552,137 +471,152 @@
 
         const file = fileInput.files[0];
         if (!file) {
-          alert("⚠️ Pilih file notepad terlebih dahulu.");
-          location.reload();  // reload halaman setelah klik OK
-          return;
+            alert("⚠️ Pilih file notepad terlebih dahulu.");
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Let’s Upload This! 🚀";
+            return;
         }
 
         const fileName = file.name.replace(".txt", "");
-
         const [rawPic, rawShift] = fileName.split("-");
+        
         if (!rawPic || !rawShift) {
-          alert("⚠️ Nama file harus format: PIC-SHIFT.txt");
-          location.reload();  // reload halaman setelah klik OK
-          return;
+            alert("⚠️ Nama file harus format: PIC-SHIFT.txt");
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Let’s Upload This! 🚀";
+            return;
         }
 
         const pic = rawPic.trim().toLowerCase();
         const shift = rawShift.trim().toLowerCase();
 
         if (!validPICs.includes(pic)) {
-          alert(`❌ PIC "${rawPic}" tidak dikenali. Upload dibatalkan.`);
-          location.reload();  // reload halaman setelah klik OK
-          return;
+            alert(`❌ PIC "${rawPic}" tidak dikenali. Upload dibatalkan.`);
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Let’s Upload This! 🚀";
+            return;
         }
 
         if (!validShifts.includes(shift)) {
-          alert(`❌ Shift "${rawShift}" tidak valid. Hanya boleh: pagi, siang, atau malam.`);
-          location.reload();  // reload halaman setelah klik OK
-          return;
+            alert(`❌ Shift "${rawShift}" tidak valid.`);
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Let’s Upload This! 🚀";
+            return;
         }
 
         const text = await file.text();
         const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
-        if (lines.length === 0) return alert("⚠️ File kosong.");
+        if (lines.length === 0) {
+            alert("⚠️ File kosong.");
+            uploadBtn.disabled = false;
+            return;
+        }
 
         const timestamp = getWIBTimestamp();
         const statusCount = { "Tiket": 0, "Tiket Merge": 0, "Grup": 0, "Tiket Akses Web": 0, "Grup Reconfig": 0, "Grup Handling": 0, "Tiket Reconfig": 0, };
         const processedData = [];
+        
+        // Array penampung duplikat agar bisa dimunculkan sekaligus
+        const dupNotepad = [];
+        const dupDatabase = [];
 
-        // Ganti map dengan for..of agar bisa pakai await di dalam loop
         for (const rawAnalisa of lines) {
-        const ticketMergeStatus = getTicketMerge(rawAnalisa);
-        const groupStatus = getGroup(rawAnalisa);
-        const status = ticketMergeStatus || groupStatus || getStatus(rawAnalisa);
+            const ticketMergeStatus = getTicketMerge ? getTicketMerge(rawAnalisa) : "";
+            const groupStatus = getGroup ? getGroup(rawAnalisa) : "";
+            const status = ticketMergeStatus || groupStatus || getStatus(rawAnalisa);
+            const analisa = rawAnalisa.replace(/[\+\-\.\,\*]$/, '');
 
-        const analisa = rawAnalisa.replace(/\+$/, '').replace(/-$/, '').replace(/\.$/, '').replace(/,$/, '').replace(/\*$/, '');
+            // 1. Cek duplikat lokal (Notepad)
+            if (processedData.some(item => 
+                item["ANALISA"] === analisa && 
+                ["Tiket", "Tiket Merge", "Tiket Akses Web", "Grup", "Grup Reconfig", "Tiket Reconfig", "Grup Handling"].includes(item.status)
+            )) {
+                dupNotepad.push(analisa);
+                continue; 
+            }
 
-        // Cek duplikat di local file dulu
-        if (processedData.some(item => 
-            item["ANALISA"] === analisa && 
-            (
-                item.status === "Tiket" || 
-                item.status === "Tiket Merge" || 
-                item.status === "Tiket Akses Web" || 
-                item.status === "Grup" || 
-                item.status === "Grup Reconfig" || 
-                item.status === "Tiket Reconfig" ||
-                item.status === "Grup Handling"
-            )
-        )) {
-          alert(`⚠️ Duplikat ditemukan di notepad: "${analisa}". Data tersebut akan di SKIP salah 1.`);
-          console.log(`⛔ Duplikat ditemukan di notepad: "${analisa}". Data tersebut akan di SKIP salah 1.`);
-          continue; // skip data duplikat lokal
+            // 2. Cek duplikat di DB berdasarkan tanggal kerja
+            const exists = await checkIfExists(pic, analisa, tglKerja);
+            if (exists) {
+                dupDatabase.push(analisa);
+                continue;
+            }
+
+            statusCount[status]++;
+            processedData.push({ 
+                pic, 
+                SHIFT: shift, 
+                ANALISA: analisa, 
+                status, 
+                timestamp, 
+                tanggalkerja: tglKerja 
+            });
         }
 
-        // Cek duplikat di Supabase berdasarkan pic, analisa, timestamp
-        const exists = await checkIfExists(pic, analisa, timestamp);
-        if (exists) {
-          console.log(`⛔ Duplikat di database: PIC="${pic}", ANALISA="${analisa}", TIMESTAMP="${timestamp}". Lewati.`);
-          continue; // skip data duplikat di DB
+        // --- LOGIKA NOTIFIKASI GABUNGAN ---
+        let reportMsg = "";
+        if (dupNotepad.length > 0) {
+            reportMsg += `⚠️ DUPLIKAT DI NOTEPAD (akan di input salah satu):\n- ${[...new Set(dupNotepad)].join("\n- ")}\n\n`;
+        }
+        if (dupDatabase.length > 0) {
+            reportMsg += `⛔ SUDAH ADA DI DATABASE (SKIP):\n- ${dupDatabase.join("\n- ")}\n\n`;
         }
 
-          statusCount[status]++;
-          processedData.push({ pic, SHIFT: shift, ANALISA: analisa, status, timestamp });
+        // Munculkan alert jika ada duplikat (Notepad atau DB)
+        if (reportMsg !== "") {
+            alert(reportMsg);
         }
 
+        // Jika tidak ada data baru sama sekali
         if (processedData.length === 0) {
-          alert("⚠️ Semua tiket tersebut sudah ada di database!");
-          location.reload(); // ⬅️ refresh halaman
-          return;
+            alert(`ℹ️ Tidak ada data baru yang unik untuk diupload ke tanggal ${tglKerja}.`);
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Let’s Upload This! 🚀";
+            return;
         }
 
-  // Kirim data ke Supabase
-  try {
-    const response = await fetch('https://mjlgvgpsexudwfhjpacy.supabase.co/rest/v1/input_db', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0'
-      },
-      body: JSON.stringify(processedData)
-    });
+        try {
+            const response = await fetch('https://mjlgvgpsexudwfhjpacy.supabase.co/rest/v1/input_db', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbGd2Z3BzZXh1ZHdmaGpwYWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NDQ1OTUsImV4cCI6MjA2MjAyMDU5NX0.4pDVg5ffOnqTmln27EzYArVMUIIcj4sUgCvu0Zawkf0'
+                },
+                body: JSON.stringify(processedData)
+            });
 
-    if (response.ok) {
-      let summary = `✅ Berhasil kirim ${processedData.length} data:\n`;
-      if (statusCount["Tiket"]) summary += `- ${statusCount["Tiket"]} Tiket\n`;
-      if (statusCount["Tiket Merge"]) summary += `- ${statusCount["Tiket Merge"]} Tiket Merge\n`;
-      if (statusCount["Grup"]) summary += `- ${statusCount["Grup"]} Grup\n`;
-      if (statusCount["Tiket Akses Web"]) summary += `- ${statusCount["Tiket Akses Web"]} Tiket Akses Web\n`;
-      if (statusCount["Grup Reconfig"]) summary += `- ${statusCount["Grup Reconfig"]} Grup Reconfig\n`;
-      if (statusCount["Grup Handling"]) summary += `- ${statusCount["Grup Handling"]} Grup Handling\n`;
-      if (statusCount["Tiket Reconfig"]) summary += `- ${statusCount["Tiket Reconfig"]} Tiket Reconfig\n`;
-      alert(summary);
-      fileInput.value = '';
-      document.getElementById("previewArea").innerHTML = '';
-    } else {
-      const err = await response.text();
-      alert("❌ Gagal kirim data: " + err);
+            if (response.ok) {
+                let summary = `✅ Berhasil upload ${processedData.length} data baru ke tanggal ${tglKerja}:\n`;
+                if (statusCount["Tiket"]) summary += `- ${statusCount["Tiket"]} Tiket\n`;
+                if (statusCount["Tiket Merge"]) summary += `- ${statusCount["Tiket Merge"]} Tiket Merge\n`;
+                if (statusCount["Grup"]) summary += `- ${statusCount["Grup"]} Grup\n`;
+                if (statusCount["Tiket Akses Web"]) summary += `- ${statusCount["Tiket Akses Web"]} Tiket Akses Web\n`;
+                if (statusCount["Grup Reconfig"]) summary += `- ${statusCount["Grup Reconfig"]} Grup Reconfig\n`;
+                if (statusCount["Grup Handling"]) summary += `- ${statusCount["Grup Handling"]} Grup Handling\n`;
+                if (statusCount["Tiket Reconfig"]) summary += `- ${statusCount["Tiket Reconfig"]} Tiket Reconfig\n`;
+                alert(summary);
+                
+                fileInput.value = '';
+                document.getElementById("previewArea").innerHTML = '';
+            } else {
+                alert("❌ Gagal kirim data: " + await response.text());
+            }
+        } catch (err) {
+            alert("❌ Error: " + err.message);
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Let’s Upload This! 🚀";
+        }
     }
-  } catch (err) {
-    alert("❌ Error saat kirim: " + err.message);
-  }  finally {
-    // Kode ini dijalankan baik berhasil maupun error
-    uploadBtn.disabled = false;
-    uploadBtn.textContent = "Upload Notepad";
-    fileInput.value = "";
+
+    function getGroup(rawAnalisa) {
+      return rawAnalisa.includes("Grup") ? "Grup" : "";
     }
-  }
 
-function getGroup(rawAnalisa) {
-  if (rawAnalisa.includes("Grup")) {
-    return "Grup";
-  }
-  return ""; // Return kosong jika tidak mengandung "Grup"
-}
-
-function getTicketMerge(rawAnalisa) {
-  if (rawAnalisa.includes("Tiket Merge")) {
-    return "Tiket Merge";
-  }
-  return ""; // Return kosong jika tidak mengandung "Tiket Merge"
-}
+    function getTicketMerge(rawAnalisa) {
+      return rawAnalisa.includes("Tiket Merge") ? "Tiket Merge" : "";
+    }
 
     async function fetchData(year, month) {
         const paddedMonth = String(month).padStart(2, '0');
@@ -749,33 +683,24 @@ function getTicketMerge(rawAnalisa) {
       }
     }
     
-    window.handleExport = handleExport;
-
     function convertToCSV(objArray) {
       const headers = Object.keys(objArray[0]);
-      const rows = objArray.map(obj =>
-        headers.map(header => {
-          const value = obj[header];
-          if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-            return `"${value.replace(/"/g, '""')}"`;
-          }
-          return value;
-        }).join(',')
-      );
+      const rows = objArray.map(obj => headers.map(header => {
+        let val = obj[header] || "";
+        if (typeof val === 'string' && (val.includes(',') || val.includes('"'))) {
+          return `"${val.replace(/"/g, '""')}"`;
+        }
+        return val;
+      }).join(','));
       return [headers.join(','), ...rows].join('\n');
     }
 
     function downloadCSV(csv, filename) {
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-      const hiddenElement = document.createElement('a');
-      hiddenElement.href = url;
-      hiddenElement.download = filename;
-      hiddenElement.click();
-      URL.revokeObjectURL(url);
+      const link = document.createElement('a');
+      link.href = url; link.download = filename; link.click();
     }
   </script>
 </body>
 </html>
-
-
