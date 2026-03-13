@@ -701,6 +701,30 @@
       const link = document.createElement('a');
       link.href = url; link.download = filename; link.click();
     }
+
+    // 1. Matikan Klik Kanan
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+// 2. Matikan Shortcut Keyboard untuk Inspect Element
+document.onkeydown = function(e) {
+    // Blokir F12
+    if(event.keyCode == 123) {
+        return false;
+    }
+    // Blokir Ctrl+Shift+I (Inspect)
+    if(e.ctrlKey && e.shiftKey && i.keyCode == 'I'.charCodeAt(0)) {
+        return false;
+    }
+    // Blokir Ctrl+Shift+J (Console)
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+        return false;
+    }
+    // Blokir Ctrl+U (View Source)
+    if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+        return false;
+    }
+};
   </script>
 </body>
 </html>
+
