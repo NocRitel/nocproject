@@ -702,17 +702,17 @@
       link.href = url; link.download = filename; link.click();
     }
 
-    // 1. Matikan Klik Kanan
+// 1. Matikan Klik Kanan
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 // 2. Matikan Shortcut Keyboard untuk Inspect Element
 document.onkeydown = function(e) {
     // Blokir F12
-    if(event.keyCode == 123) {
+    if(e.keyCode == 123) {
         return false;
     }
-    // Blokir Ctrl+Shift+I (Inspect)
-    if(e.ctrlKey && e.shiftKey && i.keyCode == 'I'.charCodeAt(0)) {
+    // Blokir Ctrl+Shift+I (Inspect) - Pastikan pakai 'e', bukan 'i'
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
         return false;
     }
     // Blokir Ctrl+Shift+J (Console)
@@ -727,4 +727,5 @@ document.onkeydown = function(e) {
   </script>
 </body>
 </html>
+
 
